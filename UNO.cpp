@@ -610,17 +610,22 @@ void Manager::HandleSpecialCards(shared_ptr<card> &card, Color ChoosenColor) {
             if (drawnCard) Players[nextIndex]->AddCard(drawnCard);
         }
         NextPlayer();
-    } else if (card->gettype() == Cardtype::wild || card->gettype() == Cardtype::wilddrawfour) {
+    }     if (card->gettype() == Cardtype::wild || card->gettype() == Cardtype::wilddrawfour) {
         if (ChoosenColor != Color::none) {
             card->setcolor(ChoosenColor);
         }
         if (card->gettype() == Cardtype::wilddrawfour) {
-            size_t nextIndex = (CurrentIndex + (turn == Turn::Left ? 1 : -1)) % Players.size();
+            int nextIdx = static_cast<int>(CurrentIndex)
+                          + (turn == Turn::Left ? 1 : -1);
+            if (nextIdx < 0) nextIdx += Players.size();
+            else if (nextIdx >= static_cast<int>(Players.size()))
+                nextIdx -= Players.size();
             for (int i = 0; i < 4; ++i) {
                 auto drawnCard = Deck.DrawCard();
-                if (drawnCard) Players[nextIndex]->AddCard(drawnCard);
+                if (drawnCard)
+                    Players[nextIdx]->AddCard(drawnCard);
             }
-            NextPlayer();
+            CurrentIndex = nextIdx;
         }
     }
 }
@@ -702,5 +707,6 @@ int main() {
         manager.PlayTurn();
     }
     cout << "\n----Game Over----" << endl;
+    cin.get();
     cin.get();
 }
