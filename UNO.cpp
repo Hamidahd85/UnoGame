@@ -5,6 +5,9 @@
 #include <cstdlib>
 #include <ctime>
 #include <algorithm>
+#include <chrono>
+#include <thread>
+
 #define RED     "\033[1;31m"
 #define GREEN   "\033[1;32m"
 #define BLUE    "\033[1;34m"
@@ -32,6 +35,17 @@ enum class Cardtype {
 enum class Turn {
     Left, Right
 };
+
+void slowPrint(const string &text, int msDelay = 30) {
+    for (char c: text) {
+        cout << c;
+        cout.flush();
+        this_thread::sleep_for(chrono::milliseconds(msDelay));
+    }
+}
+
+#define BOT_PRINT(msg) slowPrint(msg + "\n")
+
 
 class card {
 protected:
@@ -89,7 +103,7 @@ void card::setcolor(Color new_color) { color = new_color; };
 string card::colortostring(Color color) {
     switch (color) {
         case Color::red :
-            return (RED "red" RESET) ;
+            return (RED "red" RESET);
         case Color::blue :
             return (BLUE "blue" RESET);
         case Color::yellow :
@@ -304,6 +318,7 @@ public:
     HumanPlayer(string Name);
 
     int ChooseCard(shared_ptr<card> &TopCard) override;
+
     Color ChooseColor() override;
 };
 
@@ -311,8 +326,10 @@ HumanPlayer::HumanPlayer(string Name) : Player(Name) {}
 
 int HumanPlayer::ChooseCard(shared_ptr<card> &TopCard) {
     while (true) {
+        for (int i = 0; i < (int) InHand.size(); ++i) {
+            cout << "[" << i << "]" << InHand[i]->tostring() << '\n';
 
-
+        }
         cout << "Enter index or -1 to draw: ";
         int Choice;
         cin >> Choice;
@@ -330,10 +347,11 @@ int HumanPlayer::ChooseCard(shared_ptr<card> &TopCard) {
         return Choice;
     }
 }
+
 Color HumanPlayer::ChooseColor() {
     while (true) {
         cout << "Chosse Color (" << RED "0=Red" RESET ", " BLUE "1=Blue" RESET
-        ", " YELLOW "2=Yellow" RESET ", " GREEN "3=Green" RESET "): ";
+                                    ", " YELLOW "2=Yellow" RESET ", " GREEN "3=Green" RESET "): ";
         int Choice;
         cin >> Choice;
 
@@ -414,17 +432,24 @@ public:
     int id;
 
     void build();
+
     void shuffle();
-    void DealCards(vector<Player*>& players);
+
+    void DealCards(vector<Player *> &players);
 
     vector<shared_ptr<card>> cards;
     shared_ptr<card> TopCard;
+
     shared_ptr<card> getTopCard();
+
     shared_ptr<card> DrawCard();
+
     bool playable(card &topcard) override;
+
     string tostring() override;
 
     vector<shared_ptr<card>> &getcards();
+
     void PlayedCard(shared_ptr<card> newCard);
 
 
@@ -466,19 +491,21 @@ void deck::build() {
         cards.push_back(make_shared<wilddrawfour>(color, Cardtype::wilddrawfour, id++));
     }
 }
+
 void deck::shuffle() {
     srand(time(0));
-    for(int i=cards.size();i>0;i--){
-        int k=rand()%(i+1);
-        swap(cards[i],cards[k]);
+    for (int i = cards.size(); i > 0; i--) {
+        int k = rand() % (i + 1);
+        swap(cards[i], cards[k]);
     }
 }
-void deck::DealCards(vector<Player *> &players) {
-    int cardp=7;
 
-    for(int i=0;i<cardp;i++){
-        for (auto& player : players) {
-            if(!cards.empty()){
+void deck::DealCards(vector<Player *> &players) {
+    int cardp = 7;
+
+    for (int i = 0; i < cardp; i++) {
+        for (auto &player: players) {
+            if (!cards.empty()) {
                 shared_ptr<card> c = cards.back();
 
                 player->AddCard(c);
@@ -487,29 +514,33 @@ void deck::DealCards(vector<Player *> &players) {
             }
         }
     }
-    if(!cards.empty()){
-        TopCard=cards.back();
+    if (!cards.empty()) {
+        TopCard = cards.back();
 
     }
 }
-void deck::PlayedCard(shared_ptr<card> newCard){
-    if(TopCard != nullptr){
+
+void deck::PlayedCard(shared_ptr<card> newCard) {
+    if (TopCard != nullptr) {
         cards.push_back(TopCard);
         shuffle();
     }
-    TopCard=newCard;
+    TopCard = newCard;
 }
+
 shared_ptr<card> deck::DrawCard() {
-    if(!cards.empty()){
-        shared_ptr<card>c=cards.back();
+    if (!cards.empty()) {
+        shared_ptr<card> c = cards.back();
         cards.pop_back();
         return c;
     }
     return nullptr;
 }
+
 shared_ptr<card> deck::getTopCard() {
     return TopCard;
 }
+
 class Manager {
 private:
     vector<shared_ptr<Player>> Players;
@@ -521,23 +552,31 @@ private:
     bool GameOver;
 
     void NextPlayer();
-    void HandleSpecialCards(shared_ptr<card>& card, Color ChoosenCard = Color::none);
+
+    void HandleSpecialCards(shared_ptr<card> &card, Color ChoosenCard = Color::none);
+
 public:
-    Manager(vector<shared_ptr<Player>>& players);
+    Manager(vector<shared_ptr<Player>> &players);
+
     void StartGame();
+
     void PlayTurn();
+
     bool isGameOver();
+
     string Gamestat();
 };
+
 Manager::Manager(vector<shared_ptr<Player>> &players) : Players(players), CurrentIndex(0), turn(Turn::Left), GameOver(
-        false){
+        false) {
     if (players.size() < 2 || players.size() > 10) {
         throw invalid_argument("Number of players must be between 2 & 10.");
     }
 }
+
 void Manager::StartGame() {
     Deck.shuffle();
-    for (auto& player : Players) {
+    for (auto &player: Players) {
         for (int i = 0; i < 7; ++i) {
             auto card = Deck.DrawCard();
             if (card) player->AddCard(card);
@@ -546,6 +585,7 @@ void Manager::StartGame() {
     CurrentCard = Deck.DrawCard();
     sookhtecard.push_back(CurrentCard);
 }
+
 void Manager::NextPlayer() {
     if (turn == Turn::Left) {
         CurrentIndex = (CurrentIndex + 1) % Players.size();
@@ -553,11 +593,16 @@ void Manager::NextPlayer() {
         CurrentIndex = (CurrentIndex - 1 + Players.size()) % Players.size();
     }
 }
+
 void Manager::HandleSpecialCards(shared_ptr<card> &card, Color ChoosenColor) {
     if (card->gettype() == Cardtype::skip) {
         NextPlayer();
     } else if (card->gettype() == Cardtype::reverse) {
-        turn = (turn == Turn::Left) ? Turn::Right : Turn::Left;
+        if (Players.size() == 2) {
+            NextPlayer();
+        } else {
+            turn = (turn == Turn::Left) ? Turn::Right : Turn::Left;
+        }
     } else if (card->gettype() == Cardtype::drawtwo) {
         size_t nextIndex = (CurrentIndex + (turn == Turn::Left ? 1 : -1)) % Players.size();
         for (int i = 0; i < 2; ++i) {
@@ -579,37 +624,41 @@ void Manager::HandleSpecialCards(shared_ptr<card> &card, Color ChoosenColor) {
         }
     }
 }
+
 void Manager::PlayTurn() {
     if (GameOver) return;
 
     auto player = Players[CurrentIndex];
-    cout << "\nTurn: " <<  player->GetName()
-              << " | Top: " << CurrentCard->tostring() << " | Top color: " << CurrentCard->colortostring(CurrentCard->getcolor())<< "\n";
-
+    bool isBot = dynamic_cast<BotPlayer *>(player.get()) != nullptr;
+    string status = "\nTurn: " + player->GetName() + " | Top: " + CurrentCard->tostring() + " | Top color: " +
+                    card::colortostring(CurrentCard->getcolor());
+    if (isBot) BOT_PRINT(status);
+    else cout << status << endl;
     int choice = player->ChooseCard(CurrentCard);
 
     if (choice == -1) {
         auto c = Deck.DrawCard();
         if (c) {
-            cout << player->GetName() << " draws "
-                      << c->tostring() << "\n";
+            string drawMsg = player->GetName() + (" draws ") + c->tostring();
+            if (isBot) BOT_PRINT(drawMsg);
+            else cout << drawMsg << endl;
             player->AddCard(c);
         }
     } else {
         auto c = player->RemoveHandCard(choice);
-        cout << player->GetName() << " plays "
-             << c->tostring() << "\n";
+        string playMsg = player->GetName() + string(" plays ") + c->tostring();
+        if (isBot) BOT_PRINT(playMsg);
+        else cout << endl << playMsg << endl;
 
         Color col = Color::none;
         if (c->gettype() == Cardtype::wild ||
-            c->gettype() == Cardtype::wilddrawfour)
-        {
+            c->gettype() == Cardtype::wilddrawfour) {
             col = player->ChooseColor();
-            cout << "Color chosen: "
+            cout << "\nColor chosen: "
                  << card::colortostring(col) << "\n";
-            if (c->gettype() == Cardtype::wilddrawfour){
-                cout << Players[CurrentIndex + 1] << " draw 4 cards!" << "\n";
-            }
+            /*if (c->gettype() == Cardtype::wilddrawfour){
+                cout << Players[CurrentIndex + 1]->GetName() << " draw 4 cards!" << "\n";
+            }*/
         }
 
         sookhtecard.push_back(c);
@@ -637,19 +686,21 @@ string Manager::Gamestat() {
 bool Manager::isGameOver() {
     return GameOver;
 }
+
 int main() {
     vector<shared_ptr<Player>> players;
 
     players.push_back(make_shared<HumanPlayer>("Hamid"));
+    players.push_back(make_shared<BotPlayer>("ZahraSh"));
     players.push_back(make_shared<BotPlayer>("Zahra"));
 
 
     Manager manager(players);
     manager.StartGame();
-    while (!manager.isGameOver()){
-        cout << manager.Gamestat() << endl;
+    while (!manager.isGameOver()) {
+        /*slowPrint("....................................\n" + manager.Gamestat() + "\n");*/
         manager.PlayTurn();
     }
     cout << "\n----Game Over----" << endl;
-    return 0;
+    cin.get();
 }
