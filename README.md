@@ -344,6 +344,11 @@ This project is licensed under the [MIT License](LICENSE). Feel free to use, mod
 * **Email:** `hmd.ahd85@gmail.com`
 * **Instagram:** [@haamidreza\_ahd](https://instagram.com/haamidreza_ahd)
 
+* **Zahra Sh** – [@zahrash84](https://github.com/zahrash84)
+* Email: zahra.shfar05@gmail.com
+
+
+
 Enjoy playing UNO in your terminal, and happy coding!
 
 ```
